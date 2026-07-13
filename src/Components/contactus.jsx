@@ -63,7 +63,7 @@ const ContactUs = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-700">Email Us</p>
-                    <p className="text-sm text-gray-600">Jobmela@legpro.co.in</p>
+                    <p className="text-sm text-gray-600">Connect@jobmela.co.in</p>
                   </div>
                 </div>
 
@@ -260,7 +260,7 @@ const ContactUs = () => {
               <div>
                 <h3 className="font-medium text-gray-800">How do I report an issue with the platform?</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  You can report issues through this contact form or by emailing support@jobmela.com.
+                  You can report issues through this contact form or by emailing connect@jobmela.co.in.
                 </p>
               </div>
             </div>
