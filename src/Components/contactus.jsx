@@ -85,7 +85,7 @@ const ContactUs = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Office Address</p>
                     <p className="text-sm text-gray-600">
-                      Job Mela G 005,H36,Sector-63, 
+                      G 005,H36,Sector-63, 
                       <br /> GautamBudh Nagar,
                       <br /> Noida,UP - 201301,India
                     </p>
