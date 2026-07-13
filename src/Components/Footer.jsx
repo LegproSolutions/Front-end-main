@@ -12,7 +12,7 @@ const Footer = () => {
   {/* Top Description Section */}
   <div className="container mx-auto mb-8 border-b border-gray-300 pb-6">
     <p className="text-sm md:text-base leading-relaxed text-gray-700">
-      Jobmela, powered by Legpro Consultants Pvt. Ltd., goes beyond traditional job platforms. Our mission is to connect ITI, Diploma, and skilled professionals with leading industries, ensuring faster recruitment, quality talent, and a smooth hiring process for both employers and candidates
+      Jobmela powered by LEGPRO Services Private Limited, goes beyond traditional job platforms. Our mission is to connect ITI, Diploma, and skilled professionals with leading industries, ensuring faster recruitment, quality talent, and a smooth hiring process for both employers and candidates
     </p>
   </div>
 
