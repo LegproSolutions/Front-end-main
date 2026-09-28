@@ -1,5 +1,5 @@
-import { Calendar, Mail, Phone, Search, User, Download, Upload } from "lucide-react";
-import { useEffect, useMemo, useState, useRef } from "react";
+﻿import { Calendar, Mail, Phone, Search, User, Download, Upload, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import { Badge } from "@/Components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
@@ -14,101 +14,117 @@ const UsersManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [type, setType] = useState("all"); // "all" | "portal" | "crm"
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const fetchUsers = async () => {
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    portalTotal: 0,
+    crmTotal: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+
+  // Debounce search input â€” wait 500 ms before triggering API call
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+      setPagination(p => ({ ...p, page: 1 }));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const fetchUsers = useCallback(async (pageOverride) => {
     setLoading(true);
     try {
-      const res = await axios.get(`${backendUrl}/api/admin/all-users`, { withCredentials: true });
+      const currentPage = pageOverride ?? pagination.page;
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: pagination.limit,
+        type,
+      });
+      if (debouncedQuery) params.set("search", debouncedQuery);
+
+      const res = await axios.get(`${backendUrl}/api/admin/all-users?${params}`, {
+        withCredentials: true,
+      });
+
       if (res.data?.success) {
         setUsers(Array.isArray(res.data.users) ? res.data.users : []);
+        if (res.data.pagination) {
+          setPagination(res.data.pagination);
+        }
       } else {
         toast.error(res.data?.message || "Failed to load users");
       }
     } catch (err) {
       console.error("Fetch users error:", err);
-      toast.error("Unable to fetch users");
+      if (err.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error("Unable to fetch users. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, debouncedQuery, type]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page, debouncedQuery, type]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter((u) =>
-      [u.name, u.email]
-        .filter(Boolean)
-        .some((v) => v.toLowerCase().includes(q))
-    );
-  }, [users, query]);
+  const goToPage = (newPage) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    setPagination(p => ({ ...p, page: newPage }));
+  };
 
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString("en-IN") : "-");
 
   const exportUsersCSV = () => {
-    const rows = filtered.map((u) => ({
-      "First Name": u.firstName || "",
-      "Last Name": u.lastName || "",
+    if (users.length === 0) {
+      toast.error("No users on current page to export.");
+      return;
+    }
+    const rows = users.map((u) => ({
       "Full Name": [u.firstName, u.lastName].filter(Boolean).join(" ") || u.name || "",
-      Email: u.email || "",
-      Phone: u.phone || "",
-      "Alternate Phone": u.alternatePhone || "",
-      Gender: u.gender || "",
-      "Date of Birth": u.dateOfBirth ? new Date(u.dateOfBirth).toLocaleDateString("en-IN") : "",
-      "Marital Status": u.maritalStatus || "",
-      "Aadhar Number": u.aadharNumber || "",
-      "Current City": u.address?.city || "",
-      "Current State": u.address?.state || "",
-      "Full Address": u.address 
-        ? [u.address.street, u.address.landmark, u.address.city, u.address.state, u.address.pincode].filter(Boolean).join(", ") 
-        : "",
-      "Current Job Title": u.professional?.currentJobTitle || "",
-      "Current Company": u.professional?.currentCompany || "",
-      "Total Experience": u.professional?.workExperience || "",
-      "Current Salary": u.professional?.currentSalary || "",
-      "Expected Salary": u.professional?.expectedSalary || "",
-      "Notice Period": u.professional?.noticePeriod || "",
-      "Work Mode": u.professional?.workMode || "",
-      "Preferred Locations": Array.isArray(u.professional?.preferredLocations) ? u.professional.preferredLocations.join(", ") : "",
-      "Skills": Array.isArray(u.skills) ? u.skills.join(", ") : "",
-      "Education": u.education ? Object.values(u.education).map(edu => 
-        `${edu.instituteType || ""}: ${edu.instituteFields?.courseName || edu.instituteFields?.courseType || ""} from ${edu.instituteFields?.instituteName || ""}`
-      ).join(" | ") : "",
-      "Resume Link": typeof u.resume === 'string' ? u.resume : u.resume?.url || "",
+      "Email": u.email || "",
+      "Phone": u.phone || "",
+      "State": u.address?.state || u.state || "",
+      "District": u.address?.district || u.district || "",
+      "Education": u.education || "",
+      "Trades": u.trades || "",
       "Role": u.type || "User",
       "Source": u.source || "Portal",
-      "Joined Date": formatDate(u.date || u.createdAt),
+      "Joined Date": formatDate(u.createdAt),
     }));
-    exportToCSV({ data: rows, filename: `all_users_${new Date().toISOString().split('T')[0]}` });
+    exportToCSV({ data: rows, filename: `users_page${pagination.page}_${new Date().toISOString().split("T")[0]}` });
   };
-  
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     if (!file.name.endsWith(".csv")) {
       toast.error("Please upload a CSV file");
       return;
     }
-
     const formData = new FormData();
     formData.append("file", file);
-
     setIsUploading(true);
     try {
       const res = await axios.post(`${backendUrl}/api/admin/upload-users-csv`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
-
       if (res.data?.success) {
         toast.success(res.data.message || "Users uploaded successfully");
-        fetchUsers(); // Refresh the list
+        fetchUsers(1);
       } else {
         toast.error(res.data?.message || "Failed to upload users");
       }
@@ -121,13 +137,15 @@ const UsersManagement = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-legpro-primary"></div>
-      </div>
-    );
-  }
+  // Smart page number range with ellipsis
+  const getPageNumbers = () => {
+    const total = pagination.totalPages;
+    const cur   = pagination.page;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (cur <= 4)   return [1, 2, 3, 4, 5, "...", total];
+    if (cur >= total - 3) return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
+    return [1, "...", cur - 1, cur, cur + 1, "...", total];
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -137,21 +155,56 @@ const UsersManagement = () => {
             <User className="h-6 w-6" />
             Users Management
           </CardTitle>
-          <p className="text-gray-600">Total: {users.length} users</p>
+          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-1">
+            <span>Total: <strong>{(pagination.total || 0).toLocaleString()}</strong></span>
+            {pagination.portalTotal !== undefined && (
+              <>
+                <span>Portal Users: <strong>{(pagination.portalTotal || 0).toLocaleString()}</strong></span>
+                <span>CRM Candidates: <strong>{(pagination.crmTotal || 0).toLocaleString()}</strong></span>
+              </>
+            )}
+            <span className="text-gray-400">Page {pagination.page} of {pagination.totalPages}</span>
+          </div>
         </CardHeader>
+
         <CardContent>
-          {/* Search */}
-          <div className="mb-6 flex flex-col md:flex-row gap-3 md:items-center">
+          {/* Controls row */}
+          <div className="mb-6 flex flex-col md:flex-row gap-3 md:items-center flex-wrap">
+            {/* Search */}
             <div className="relative max-w-md w-full">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or email..."
+                id="users-search-input"
+                placeholder="Search by name, email, or phoneâ€¦"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <div className="md:ml-auto flex items-center gap-2">
+
+            {/* Type filter pills */}
+            <div className="flex gap-1 bg-gray-100 rounded-md p-1">
+              {[
+                { key: "all",    label: "All" },
+                { key: "portal", label: "Portal" },
+                { key: "crm",    label: "CRM" },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setType(key); setPagination(p => ({ ...p, page: 1 })); }}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    type === key
+                      ? "bg-legpro-primary text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Upload / Export */}
+            <div className="md:ml-auto flex items-center gap-2 flex-wrap">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -159,64 +212,143 @@ const UsersManagement = () => {
                 accept=".csv"
                 className="hidden"
               />
-              <Button 
-                variant="outline" 
-                onClick={() => fileInputRef.current?.click()} 
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
                 className="flex items-center gap-2"
               >
-                <Upload className="h-4 w-4" /> 
-                {isUploading ? "Uploading..." : "Upload CSV"}
+                <Upload className="h-4 w-4" />
+                {isUploading ? "Uploadingâ€¦" : "Upload CSV"}
               </Button>
               <Button variant="outline" onClick={exportUsersCSV} className="flex items-center gap-2">
-                <Download className="h-4 w-4" /> Download CSV
+                <Download className="h-4 w-4" /> Export Page
               </Button>
             </div>
           </div>
 
-          {/* List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((user) => (
-              <Card key={user._id} className="border border-gray-200 hover:shadow-md transition-shadow">
-                <CardContent className="pt-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-legpro-primary text-white rounded-full flex items-center justify-center font-semibold">
-                      {user.name?.[0]?.toUpperCase() || "U"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {user.name}
-                        </h3>
-                        <Badge variant="secondary" className={user.type === "CRM Candidate" ? "bg-orange-100 text-orange-700 border-orange-200" : "bg-blue-100 text-blue-700 border-blue-200"}>
-                          {user.type === "CRM Candidate" ? "CRM" : "Portal"}
-                        </Badge>
-                      </div>
-                      <a href={`mailto:${user.email}`} className="mt-1 hover:underline text-sm text-gray-600 flex items-center gap-2 truncate">
-                        <Mail className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{user.email}</span>
-                      </a>
-                      <a href={`tel:${user.phone}`} className="mt-1 hover:underline text-sm text-gray-600 flex items-center gap-2 truncate">
-                        <Phone className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{user.phone}</span>
-                      </a>
-                      <div className="mt-1 text-xs text-gray-500 flex items-center gap-2">
-                        <Calendar className="h-3 w-3" />
-                        Joined {formatDate(user.date || user.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="text-center py-8">
-              <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-              <p className="text-gray-500">Try a different search</p>
+          {/* Content */}
+          {loading ? (
+            <div className="flex justify-center items-center h-48">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-legpro-primary" />
+              <span className="ml-3 text-gray-500">Loading usersâ€¦</span>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {users.map((user) => (
+                  <Card key={user._id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                    <CardContent className="pt-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-legpro-primary text-white rounded-full flex items-center justify-center font-semibold flex-shrink-0">
+                          {user.name?.[0]?.toUpperCase() || "U"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="font-semibold text-gray-900 truncate">{user.name}</h3>
+                            <Badge
+                              variant="secondary"
+                              className={
+                                user.type === "CRM Candidate"
+                                  ? "bg-orange-100 text-orange-700 border-orange-200 whitespace-nowrap text-xs"
+                                  : "bg-blue-100 text-blue-700 border-blue-200 whitespace-nowrap text-xs"
+                              }
+                            >
+                              {user.type === "CRM Candidate" ? "CRM" : "Portal"}
+                            </Badge>
+                          </div>
+                          {user.email && (
+                            <a href={`mailto:${user.email}`} className="mt-1 hover:underline text-sm text-gray-600 flex items-center gap-2 truncate">
+                              <Mail className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">{user.email}</span>
+                            </a>
+                          )}
+                          {user.phone && (
+                            <a href={`tel:${user.phone}`} className="mt-1 hover:underline text-sm text-gray-600 flex items-center gap-2 truncate">
+                              <Phone className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">{user.phone}</span>
+                            </a>
+                          )}
+                          <div className="mt-1 text-xs text-gray-500 flex items-center gap-2">
+                            <Calendar className="h-3 w-3" />
+                            Joined {formatDate(user.createdAt)}
+                          </div>
+                          {(user.state || user.district) && (
+                            <div className="mt-1 text-xs text-gray-500 truncate">
+                              ðŸ“ {[user.district, user.state].filter(Boolean).join(", ")}
+                            </div>
+                          )}
+                          {user.trades && (
+                            <div className="mt-1 text-xs text-gray-500 truncate">ðŸ”§ {user.trades}</div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {users.length === 0 && (
+                <div className="text-center py-8">
+                  <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+                  <p className="text-gray-500">
+                    {query ? "Try a different search term." : "No users available."}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="flex justify-center items-center gap-1 mt-8 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(pagination.page - 1)}
+                disabled={!pagination.hasPreviousPage || loading}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" /> Prev
+              </Button>
+
+              {getPageNumbers().map((num, idx) =>
+                num === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 py-1 text-gray-500 text-sm">â€¦</span>
+                ) : (
+                  <Button
+                    key={num}
+                    variant={pagination.page === num ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => goToPage(num)}
+                    disabled={loading}
+                    className={`min-w-[2rem] ${pagination.page === num ? "bg-legpro-primary text-white" : ""}`}
+                  >
+                    {num}
+                  </Button>
+                )
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(pagination.page + 1)}
+                disabled={!pagination.hasNextPage || loading}
+                className="flex items-center gap-1"
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Records summary */}
+          {pagination.total > 0 && (
+            <p className="text-center text-sm text-gray-500 mt-3">
+              Showing {((pagination.page - 1) * pagination.limit) + 1}â€“
+              {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+              {pagination.total.toLocaleString()} users
+            </p>
           )}
         </CardContent>
       </Card>
@@ -225,5 +357,3 @@ const UsersManagement = () => {
 };
 
 export default UsersManagement;
-
-

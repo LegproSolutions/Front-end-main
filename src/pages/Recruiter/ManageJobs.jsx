@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from "react"; // Import useState
 import { AppContext } from "../../context/AppContext";
-import { Eye, EyeOff, Users, Briefcase, Edit, Lock, Info, AlertCircle } from "lucide-react"; // Import AlertCircle icon
+import { Eye, EyeOff, Users, Briefcase, Edit, Lock, Info, AlertCircle, Trash2, RefreshCw } from "lucide-react"; // Import AlertCircle, Trash2, and RefreshCw icons
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 const backendUrl = import.meta.env?.VITE_API_URL;
 import axios from "../../utils/axiosConfig";
 
 const ManageJobs = () => {
-  const { jobs = [], setJobs, isJobsLoading, companyData, setCompanyData, isAuthLoading, editJob, setSelectedJobId } = useContext(AppContext);
+  const { jobs = [], setJobs, isJobsLoading, companyData, setCompanyData, isAuthLoading, editJob, setSelectedJobId, deleteJob, repostJob } = useContext(AppContext);
   const navigate = useNavigate();
 
   // State for objection modal
@@ -159,13 +159,20 @@ const ManageJobs = () => {
         )}
       </div>
 
+      {/* Scroll indicator for mobile */}
+      <div className="md:hidden flex items-center gap-1.5 text-xs text-slate-500 mb-3 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+        <Info className="w-4 h-4 text-blue-600 flex-shrink-0" />
+        <span>Swipe left/right to scroll the table.</span>
+      </div>
+
       {/* TABLE */}
-      <div className="overflow-x-auto max-w-full">
-        <table className="w-full min-w-[600px] border-collapse bg-white rounded-lg">
+      <div className="overflow-x-auto max-w-full rounded-lg border border-gray-200 shadow-sm">
+        <table className="w-full min-w-[950px] border-collapse bg-white rounded-lg">
           <thead>
             <tr className="bg-gray-100 text-gray-700 text-xs sm:text-sm uppercase font-semibold">
               <th className="px-3 sm:px-5 py-3 sm:py-4 text-left">Job ID</th>
               <th className="px-3 sm:px-5 py-3 sm:py-4 text-left">Job Title</th>
+              <th className="px-3 sm:px-5 py-3 sm:py-4 text-left">Company Name</th>
               <th className="px-3 sm:px-5 py-3 sm:py-4 text-left">Date Posted</th>
               <th className="px-3 sm:px-5 py-3 sm:py-4 text-center">Applicants</th>
               <th className="px-3 sm:px-5 py-3 sm:py-4 text-center">Status</th>
@@ -186,6 +193,9 @@ const ManageJobs = () => {
                   </td>
                   <td className="px-3 sm:px-5 py-3">
                     <div className="h-4 bg-gray-300 rounded w-32"></div>
+                  </td>
+                  <td className="px-3 sm:px-5 py-3">
+                    <div className="h-4 bg-gray-300 rounded w-28"></div>
                   </td>
                   <td className="px-3 sm:px-5 py-3">
                     <div className="h-4 bg-gray-300 rounded w-20"></div>
@@ -226,14 +236,14 @@ const ManageJobs = () => {
                 } else if (job.status === "Rejected") {
                   statusMessage = "Rejected";
                   statusClasses = "bg-red-200 text-red-800";
-                  rowClasses = "cursor-default bg-red-50";
+                  rowClasses = "hover:bg-gray-50 cursor-pointer bg-red-50/50";
                   editButtonDisabled = false;
                   toggleVisibilityDisabled = true;
                 } else {
                   // Default to Pending Admin Verification
                   statusMessage = job.status || "Pending Admin Verification";
                   statusClasses = "bg-yellow-100 text-yellow-800";
-                  rowClasses = "cursor-default bg-yellow-50/30";
+                  rowClasses = "hover:bg-gray-50 cursor-pointer bg-yellow-50/30";
                   editButtonDisabled = false;
                   toggleVisibilityDisabled = false;
 
@@ -245,7 +255,7 @@ const ManageJobs = () => {
                   if (hasObjection) {
                     statusMessage = "Objection (View Details)";
                     statusClasses = "bg-red-200 text-red-800 cursor-pointer";
-                    rowClasses = "cursor-default border-2 border-red-300 bg-red-50";
+                    rowClasses = "hover:bg-gray-50 cursor-pointer border-2 border-red-300 bg-red-50";
                   }
                 }
 
@@ -253,12 +263,16 @@ const ManageJobs = () => {
                   <tr
                     key={job._id}
                     className={`border-t border-gray-200 transition ${rowClasses}`}
+                    onClick={() => handlePreview(job._id)}
                   >
                     <td className="px-3 sm:px-5 py-3 text-gray-700 text-xs sm:text-sm">
                       {String(job.jobId || "0").padStart(4, "0")}
                     </td>
                     <td className="px-3 sm:px-5 py-3 font-medium text-gray-900 text-xs sm:text-sm">
                       {job.title}
+                    </td>
+                    <td className="px-3 sm:px-5 py-3 text-gray-700 text-xs sm:text-sm">
+                      {job.companyDetails?.name || "N/A"}
                     </td>
                     <td className="px-3 sm:px-5 py-3 text-gray-600 text-xs sm:text-sm">
                       {new Date(job.date).toLocaleDateString()}
@@ -296,34 +310,28 @@ const ManageJobs = () => {
                       {job.location}
                     </td>
                     <td className="px-3 sm:px-5 py-3 text-center flex justify-center items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!toggleVisibilityDisabled) {
+                      {job.status === "Approved" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             toggleVisibility(job._id);
-                          } else {
-                            toast.error("This job post cannot be toggled as it's not verified or is under review.");
-                          }
-                        }}
-                        disabled={toggleVisibilityDisabled}
-                        className={`px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium text-white rounded-md flex items-center gap-1 ${
-                          !toggleVisibilityDisabled
-                            ? "bg-gray-800 hover:bg-gray-700"
-                            : "bg-gray-400 cursor-not-allowed"
-                        }`}
-                      >
-                        {job.visible ? (
-                          <>
-                            <EyeOff className="w-4 h-4" /> Hide
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="w-4 h-4" /> Show
-                          </>
-                        )}
-                      </button>
+                          }}
+                          className="w-24 h-9 flex items-center justify-center gap-1.5 text-xs font-medium text-white bg-gray-800 hover:bg-gray-700 rounded-md transition-colors"
+                        >
+                          {job.visible ? (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5" /> Hide
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3.5 h-3.5" /> Show
+                            </>
+                          )}
+                        </button>
+                      )}
                       <Link
                         onClick={(e) => {
+                          e.stopPropagation();
                           // Allow editing for all jobs
                           if (hasObjection && isEditedAfterObjection) {
                              // Optional: Warn if already edited after objection
@@ -331,15 +339,47 @@ const ManageJobs = () => {
                           }
                         }}
                         to={`/dashboard/edit-job/${job._id}`}
-                        className={`px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium text-white rounded-md flex items-center gap-1 ${
+                        className={`w-24 h-9 flex items-center justify-center gap-1.5 text-xs font-medium text-white rounded-md transition-colors ${
                           // Edit button is enabled if verified OR if there's an objection and it hasn't been edited yet
                           (!editButtonDisabled || (hasObjection && !isEditedAfterObjection))
                             ? "bg-legpro-primary hover:bg-blue-700"
                             : "bg-gray-400 cursor-not-allowed pointer-events-none"
                         }`}
                       >
-                        <Edit className="w-4 h-4" /> Edit
+                        <Edit className="w-3.5 h-3.5" /> Edit
                       </Link>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (window.confirm("Are you sure you want to delete this job post? This action cannot be undone.")) {
+                            const res = await deleteJob(job._id);
+                            if (res.success) {
+                              toast.success(res.message || "Job deleted successfully");
+                            } else {
+                              toast.error(res.message || "Failed to delete job");
+                            }
+                          }
+                        }}
+                        className="w-24 h-9 flex items-center justify-center gap-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (window.confirm("Do you want to re-post and boost this job? This will extend the deadline by 30 days and bring it to the first page of the portal.")) {
+                            const res = await repostJob(job._id);
+                            if (res.success) {
+                              toast.success(res.message || "Job boosted and re-posted successfully");
+                            } else {
+                              toast.error(res.message || "Failed to re-post job");
+                            }
+                          }
+                        }}
+                        className="w-24 h-9 flex items-center justify-center gap-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" /> Re-post
+                      </button>
                     </td>
                   </tr>
                 );

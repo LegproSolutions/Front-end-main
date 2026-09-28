@@ -1148,7 +1148,7 @@ const UserProfileForm = () => {
       },
       
       // Education - convert array to Map structure expected by backend
-      education: formData.education.filter(e => e.isSaved).reduce((acc, edu, index) => {
+      education: formData.education.filter(e => e.type && e.type.trim() !== "" && e.year).reduce((acc, edu, index) => {
         acc[`education_${index}`] = {
           instituteType: edu.type || 'University',
           instituteFields: {
@@ -1303,8 +1303,7 @@ const UserProfileForm = () => {
         const returnUrl = sessionStorage.getItem("returnAfterProfile") || sessionStorage.getItem("previousPath");
 
         if (pendingJobId && returnUrl && returnUrl.includes(`/job-details/${pendingJobId}`)) {
-          toast?.success("Profile completed successfully. Redirecting back to your job application...");
-          sessionStorage.setItem("autoApplyPendingJob", "true");
+          toast?.success("Profile completed successfully. Redirecting back to the job details page...");
 
           setUploadStatus(prev => ({
             ...prev,
@@ -1413,7 +1412,7 @@ const UserProfileForm = () => {
         duration: edu.instituteFields?.courseDuration || '',
         trade: edu.instituteFields?.trade || '',
         universityNotInList: false,
-        isSaved: true
+        isSaved: false
       })) : [{
         type: "",
         institution: "",
@@ -2026,7 +2025,7 @@ const UserProfileForm = () => {
                         </div>
                       ) : (
                         <div className="space-y-8 mt-8">
-                          {formData.education.filter(e => e.type && e.type.trim() !== "" && !e.isSaved).map((edu) => {
+                          {formData.education.filter(e => e.type && e.type.trim() !== "").map((edu) => {
                             const actualIndex = formData.education.findIndex(e => e.type === edu.type);
                             const showCourseName = ["Graduate", "Post Graduate"].includes(edu.type);
                             const showSpecialization = ["ITI", "Diploma", "Graduate", "Post Graduate"].includes(edu.type);
@@ -2235,18 +2234,6 @@ const UserProfileForm = () => {
                                           <option key={year} value={year}>{year}</option>
                                         ))}
                                       </select>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          if (!edu.year || (showCourseName && !edu.degree) || (showSpecialization && !edu.field)) return;
-                                          const updated = [...formData.education];
-                                          updated[actualIndex].isSaved = true;
-                                          setFormData(prev => ({ ...prev, education: updated }));
-                                        }}
-                                        className="px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-all shadow-md"
-                                      >
-                                        Save
-                                      </button>
                                     </div>
                                   </div>
                                 </div>
@@ -2257,12 +2244,12 @@ const UserProfileForm = () => {
                       )}
 
                       {/* Saved Box */}
-                      {formData.education.some(e => e.isSaved) && (
+                      {formData.education.some(e => e.type && e.type.trim() !== "" && e.year) && (
                         <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl shadow-sm">
                           <h4 className="text-lg font-bold text-green-900 mb-4 border-b border-green-200 pb-2">Saved Education Entries</h4>
                           <div className="space-y-4">
                             {formData.education
-                              .filter(e => e.isSaved)
+                              .filter(e => e.type && e.type.trim() !== "" && e.year)
                               .sort((a, b) => {
                                 const order = ["Below 10 Pass", "10th Pass", "12th Pass", "ITI", "Diploma", "Graduate", "Post Graduate"];
                                 return order.indexOf(a.type) - order.indexOf(b.type);

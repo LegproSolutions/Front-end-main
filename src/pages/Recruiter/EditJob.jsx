@@ -308,12 +308,7 @@ const EditJob = () => {
     fetchJobData();
   }, [id, fetchJob]);
 
-  // Sync Quill Editor
-  useEffect(() => {
-    if (quillRef.current && description) {
-      quillRef.current.root.innerHTML = description;
-    }
-  }, [description]);
+
 
   // Category handler functions
   const handleCategoryChange = (value) => {
@@ -488,18 +483,25 @@ const EditJob = () => {
   // Submit Edit Handler
   const onSubmitHandler = async (e) => {
     e.preventDefault();
-    if (!quillRef.current) return;
+    const isDescEmpty = !description || description === "<p><br></p>";
 
-    const descHtml = quillRef.current.root.innerHTML;
+    const missing = [];
+    if (!title) missing.push("Job Title");
+    if (isDescEmpty) missing.push("Job Description");
+    if (!location) missing.push("Job Location");
+    if (!category) missing.push("Job Category");
+    if (!deadline) missing.push("Application Deadline");
+    if (!vacancies) missing.push("Number of Openings/Vacancies");
+    if (!companyName) missing.push("Company Name");
 
-    if (!title || !descHtml || !location || !category || !deadline || !vacancies || !companyName) {
-      toast.error("Please fill in all required fields marked with *");
+    if (missing.length > 0) {
+      toast.error(`Please fill in the required fields: ${missing.join(", ")}`);
       return;
     }
 
     const jobData = {
       title,
-      description: descHtml,
+      description,
       location,
       salary: salaryBreakdown.ctc ? Number(salaryBreakdown.ctc) : 0,
       openings: vacancies ? Number(vacancies) : 1,
@@ -557,8 +559,14 @@ const EditJob = () => {
   };
 
   useEffect(() => {
-    if (!quillRef.current && editorRef.current) {
-      quillRef.current = new Quill(editorRef.current, {
+    if (activeSection === "core" && editorRef.current) {
+      const parent = editorRef.current.parentNode;
+      if (parent) {
+        const toolbars = parent.querySelectorAll(".ql-toolbar");
+        toolbars.forEach(tb => tb.remove());
+      }
+      editorRef.current.innerHTML = "";
+      const quill = new Quill(editorRef.current, {
         theme: "snow",
         placeholder: "Write detailed job description here...",
         modules: {
@@ -571,8 +579,20 @@ const EditJob = () => {
           ],
         },
       });
+
+      quillRef.current = quill;
+
+      if (description) {
+        quill.root.innerHTML = description;
+      }
+
+      quill.on("text-change", () => {
+        setDescription(quill.root.innerHTML);
+      });
+    } else {
+      quillRef.current = null;
     }
-  }, []);
+  }, [activeSection, editorRef.current, description === ""]); // Run on reload/load too
 
   return (
     <div className="bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 min-h-screen">
@@ -1067,10 +1087,10 @@ const EditJob = () => {
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 font-bold text-xs mb-2">CTC (Annual) *</label>
+                      <label className="block text-gray-700 font-bold text-xs mb-2">Total Monthly CTC *</label>
                       <input
                         type="number"
-                        placeholder="e.g. 250000"
+                        placeholder="e.g. 25000"
                         value={salaryBreakdown.ctc}
                         onChange={(e) => setSalaryBreakdown({ ...salaryBreakdown, ctc: e.target.value })}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none"

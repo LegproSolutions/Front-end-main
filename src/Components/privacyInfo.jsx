@@ -32,7 +32,7 @@ const PrivacyInfo = () => {
           <Card className="border-none shadow-lg mb-8">
             <CardContent className="p-6 sm:p-8">
               <p className="text-gray-700 leading-relaxed text-lg mb-4">
-               At <strong className="text-[#0F3B7A]">Jobmela</strong>, powered by Legpro Consultants Pvt. Ltd., we value your privacy. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our platform.
+               At <strong className="text-[#0F3B7A]">Jobmela</strong>, powered by Legpro Services Pvt. Ltd., we value your privacy. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our platform.
               </p>
               <p className="text-gray-700 leading-relaxed">
                 Last updated: June 2023
@@ -221,7 +221,7 @@ const PrivacyInfo = () => {
                       don't hesitate to reach out to our privacy team.
                     </p>
                     <a 
-                      href="mailto:support@jobmela.com" 
+                      href="mailto:connect@jobmela.co.in" 
                       className="inline-flex items-center px-6 py-3 bg-legpro-primary hover:bg-legpro-primary-hover text-white font-medium rounded-md transition-colors"
                     >
                       <Mail className="w-5 h-5 mr-2" />

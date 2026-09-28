@@ -57,7 +57,7 @@ const PlatformStats = () => {
             color: "bg-blue-900"
         },
         {
-            label: "Job Opportunities",
+            label: "Active Job Vacancies",
             value: platformStats.jobs,
             icon: <Briefcase className="w-8 h-8 text-white" />,
             color: "bg-blue-900"

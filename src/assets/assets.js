@@ -121,13 +121,23 @@ export const assets = {
 };
 
 export const JobCategories = [
+  "BPO",
+  "Service",
+  "IT",
+  "Finance",
+  "Healthcare",
+  "Education",
+  "Marketing",
+  "Sales",
+  "Manufacturing",
   "Construction",
   "Plumbing",
   "Electrical Work",
   "Carpentry",
   "Welding",
-  "Manufacturing",
   "Automobile Repair",
+  "Hospitality",
+  "Logistics",
   "Other"
 ];
 

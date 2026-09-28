@@ -80,8 +80,8 @@ export default function Clients() {
         email: c.email || '',
         phone: c.phone || '',
         location: c.location || '',
-        activeJobs: c._count?.pipelines || 0,
-        totalHires: c._count?.candidates || 0,
+        activeJobs: c._count?.candidates || 0,
+        totalHires: c._count?.hires || 0,
       }));
     },
     staleTime: 0,
@@ -184,7 +184,7 @@ export default function Clients() {
                   <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 hidden md:table-cell">Industrial Vertical</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 hidden lg:table-cell">Key Contact</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 hidden lg:table-cell text-center">Location</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 text-center">Pipeline</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 text-center">Applications</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 text-center">Engagement</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 text-right pr-6">Action</TableHead>
                 </TableRow>
@@ -253,7 +253,7 @@ export default function Clients() {
                             )}>
                               {c.activeJobs}
                             </span>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Jobs</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Application</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-5 text-center">

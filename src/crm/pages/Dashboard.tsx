@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { AppLayout } from "@/crm/components/AppLayout";
 import { StatCard } from "@/crm/components/StatCard";
 import { Card } from "@/crm/components/ui/card";
 import { Badge } from "@/crm/components/ui/badge";
 import { Button } from "@/crm/components/ui/button";
 import { Users, Briefcase, Building2, TrendingUp, GraduationCap, UserCheck, Activity, Clock, RefreshCcw } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/crm/lib/api";
 import { transformJobData } from "@/crm/lib/job-utils";
@@ -35,6 +36,35 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
+function formatRelativeTime(dateString: string) {
+  if (!dateString) return "Just now";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
+}
+
+const getActivityIcon = (action: string, details?: string) => {
+  const act = `${action || ""} ${details || ""}`.toLowerCase();
+  if (act.includes("candidate") || act.includes("lead") || act.includes("apply") || act.includes("applied")) {
+    return Users;
+  }
+  if (act.includes("job") || act.includes("opening") || act.includes("vacancy")) {
+    return Briefcase;
+  }
+  if (act.includes("client") || act.includes("company")) {
+    return Building2;
+  }
+  return Activity;
+};
+
 export default function Dashboard() {
   const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useQuery({
     queryKey: ["dashboardStats"],
@@ -62,6 +92,26 @@ export default function Dashboard() {
 
   const candidates = candidatesRes?.data || [];
 
+  const [trendInterval, setTrendInterval] = useState<"today" | "weekly" | "monthly" | "quarterly" | "yearly" | "custom">("weekly");
+  
+  const todayStr = new Date().toISOString().split("T")[0];
+  const lastWeekStr = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const [startDate, setStartDate] = useState(lastWeekStr);
+  const [endDate, setEndDate] = useState(todayStr);
+
+  const { data: registrationTrendRes, isLoading: isTrendLoading } = useQuery({
+    queryKey: ["candidateRegistrationTrend", trendInterval, startDate, endDate],
+    queryFn: async () => (await api.get("/stats/registration-trend", { 
+      params: { 
+        view: trendInterval,
+        startDate: trendInterval === "custom" ? startDate : undefined,
+        endDate: trendInterval === "custom" ? endDate : undefined
+      } 
+    })).data,
+  });
+
+  const registrationTrendData = registrationTrendRes?.data || [];
+
   if (isStatsLoading || isClientsLoading) {
     return (
       <AppLayout title="Dashboard">
@@ -84,7 +134,19 @@ export default function Dashboard() {
   const joinedCandidates = statsData?.joinedCandidates || 0;
   const conversionRate = statsData?.conversionRate || 0;
   const openJobs = dbJobs.filter((j: any) => j.status === "open").length;
-  const totalPositions = dbJobs.reduce((acc: number, j: any) => acc + (j.openPositions || 0), 0);
+  const totalPositions = dbJobs.filter((j: any) => j.status === "open").reduce((acc: number, j: any) => acc + (j.openPositions || 0), 0);
+
+  const weeklyChartData = statsData?.weeklyTrend?.length > 0
+    ? statsData.weeklyTrend
+    : [
+        { day: "Mon", applications: 0, hires: 0 },
+        { day: "Tue", applications: 0, hires: 0 },
+        { day: "Wed", applications: 0, hires: 0 },
+        { day: "Thu", applications: 0, hires: 0 },
+        { day: "Fri", applications: 0, hires: 0 },
+        { day: "Sat", applications: 0, hires: 0 },
+        { day: "Sun", applications: 0, hires: 0 },
+      ];
 
   const educationCounts = statsData?.education || [];
   const pipelineStats = statsData?.pipelineStats || [];
@@ -100,11 +162,7 @@ export default function Dashboard() {
     };
   }).filter((c: any) => c.activeJobs > 0).sort((a, b) => b.eligible - a.eligible).slice(0, 6);
 
-  const recentActivity = [
-    { action: "Real-time dashboard connected", time: "Just now", icon: Activity },
-    { action: "New candidate bulk import", time: "2 hours ago", icon: Users },
-    { action: "AI Screening campaign started", time: "5 hours ago", icon: TrendingUp },
-  ];
+  const recentActivities = statsData?.recentActivities || [];
 
   return (
     <AppLayout
@@ -141,7 +199,7 @@ export default function Dashboard() {
                 <Badge variant="outline" className="text-[10px]">Weekly View</Badge>
               </div>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={weeklyData}>
+                <BarChart data={weeklyChartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                   <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "rgba(0,0,0,0.4)" }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "rgba(0,0,0,0.4)" }} />
@@ -187,6 +245,82 @@ export default function Dashboard() {
             </Card>
           </motion.div>
         </div>
+
+        {/* Candidate Registration Trends */}
+        <motion.div variants={item}>
+          <Card className="p-6 border-none shadow-xl bg-gradient-to-br from-card to-muted/20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" /> Candidate Registration Trends
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Visualize new candidate onboarding velocity</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {trendInterval === "custom" && (
+                  <div className="flex items-center gap-2 bg-muted/20 p-1 rounded-xl border border-muted/30">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-transparent text-[10px] font-bold text-foreground focus:outline-none px-2 py-1"
+                    />
+                    <span className="text-[10px] text-muted-foreground font-bold">to</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-transparent text-[10px] font-bold text-foreground focus:outline-none px-2 py-1"
+                    />
+                  </div>
+                )}
+                
+                <select
+                  value={trendInterval}
+                  onChange={(e) => setTrendInterval(e.target.value as any)}
+                  className="bg-muted/40 hover:bg-muted/60 text-xs font-bold text-foreground px-3 py-1.5 rounded-xl border border-muted/50 focus:outline-none cursor-pointer capitalize"
+                >
+                  <option value="today" className="bg-background text-foreground">Today</option>
+                  <option value="weekly" className="bg-background text-foreground">Weekly</option>
+                  <option value="monthly" className="bg-background text-foreground">Monthly</option>
+                  <option value="quarterly" className="bg-background text-foreground">Quarterly</option>
+                  <option value="yearly" className="bg-background text-foreground">Yearly</option>
+                  <option value="custom" className="bg-background text-foreground">Custom Range</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="h-[260px] w-full relative">
+              {isTrendLoading ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <RefreshCcw className="h-6 w-6 text-primary/30 animate-spin" />
+                </div>
+              ) : registrationTrendData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={registrationTrendData}>
+                    <defs>
+                      <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "rgba(0,0,0,0.4)" }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "rgba(0,0,0,0.4)" }} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                    />
+                    <Area type="monotone" dataKey="count" name="Registrations" stroke="var(--primary)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCount)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground opacity-50 italic">
+                  No registration data for this range
+                </div>
+              )}
+            </div>
+          </Card>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Education Breakdown */}
@@ -238,19 +372,33 @@ export default function Dashboard() {
                 <Activity className="h-4 w-4 text-primary" /> Recent Activity
               </h3>
               <div className="space-y-4">
-                {recentActivity.map((a, i) => (
-                  <div key={i} className="flex items-start gap-3 group">
-                    <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                      <a.icon className="h-4 w-4 text-primary/60" />
-                    </div>
-                    <div className="flex-1 min-w-0 border-b border-muted pb-3 group-last:border-0 group-last:pb-0">
-                      <p className="text-xs font-semibold leading-none mb-1">{a.action}</p>
-                      <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-2.5 w-2.5" /> {a.time}
-                      </p>
-                    </div>
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((a: any, i: number) => {
+                    const Icon = getActivityIcon(a.action, a.details);
+                    return (
+                      <div key={a.id || i} className="flex items-start gap-3 group">
+                        <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                          <Icon className="h-4 w-4 text-primary/60" />
+                        </div>
+                        <div className="flex-1 min-w-0 border-b border-muted pb-3 group-last:border-0 group-last:pb-0">
+                          <p className="text-xs font-semibold leading-normal mb-1">
+                            {a.action}
+                            {a.details && (
+                              <span className="block text-[10px] text-muted-foreground font-normal mt-0.5">{a.details}</span>
+                            )}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-2.5 w-2.5" /> {formatRelativeTime(a.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-10 opacity-50 italic text-xs">
+                    No recent activity logged
                   </div>
-                ))}
+                )}
               </div>
             </Card>
           </motion.div>

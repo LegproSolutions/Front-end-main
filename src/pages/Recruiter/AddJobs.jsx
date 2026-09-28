@@ -48,6 +48,7 @@ const AddJob = () => {
 
   // Core Details States
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -339,12 +340,19 @@ const AddJob = () => {
   // Submit Handler
   const onSubmitHandler = async (e) => {
     e.preventDefault();
-    if (!quillRef.current) return;
+    const isDescEmpty = !description || description === "<p><br></p>";
 
-    const description = quillRef.current.root.innerHTML;
+    const missing = [];
+    if (!title) missing.push("Job Title");
+    if (isDescEmpty) missing.push("Job Description");
+    if (!location) missing.push("Job Location");
+    if (!category) missing.push("Job Category");
+    if (!deadline) missing.push("Application Deadline");
+    if (!vacancies) missing.push("Number of Openings/Vacancies");
+    if (!companyName) missing.push("Company Name");
 
-    if (!title || !description || !location || !category || !deadline || !vacancies || !companyName) {
-      toast.error("Please fill in all required fields marked with *");
+    if (missing.length > 0) {
+      toast.error(`Please fill in the required fields: ${missing.join(", ")}`);
       return;
     }
 
@@ -405,8 +413,14 @@ const AddJob = () => {
   };
 
   useEffect(() => {
-    if (!quillRef.current && editorRef.current) {
-      quillRef.current = new Quill(editorRef.current, {
+    if (activeSection === "core" && editorRef.current) {
+      const parent = editorRef.current.parentNode;
+      if (parent) {
+        const toolbars = parent.querySelectorAll(".ql-toolbar");
+        toolbars.forEach(tb => tb.remove());
+      }
+      editorRef.current.innerHTML = "";
+      const quill = new Quill(editorRef.current, {
         theme: "snow",
         placeholder: "Write detailed job description here...",
         modules: {
@@ -419,8 +433,20 @@ const AddJob = () => {
           ],
         },
       });
+
+      quillRef.current = quill;
+
+      if (description) {
+        quill.root.innerHTML = description;
+      }
+
+      quill.on("text-change", () => {
+        setDescription(quill.root.innerHTML);
+      });
+    } else {
+      quillRef.current = null;
     }
-  }, []);
+  }, [activeSection, editorRef.current]);
 
   return (
     <div className="bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 min-h-screen">
@@ -907,10 +933,10 @@ const AddJob = () => {
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 font-bold text-xs mb-2">CTC (Annual) *</label>
+                      <label className="block text-gray-700 font-bold text-xs mb-2">Total Monthly CTC *</label>
                       <input
                         type="number"
-                        placeholder="e.g. 250000"
+                        placeholder="e.g. 25000"
                         value={salaryBreakdown.ctc}
                         onChange={(e) => setSalaryBreakdown({ ...salaryBreakdown, ctc: e.target.value })}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none"

@@ -511,13 +511,13 @@ const EditJobModal = ({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <option value="10th">10th Pass</option>
-                            <option value="12th">12th Pass</option>
-                            <option value="ITI">ITI</option>
-                            <option value="Diploma">Diploma</option>
-                            <option value="Graduation">Graduation</option>
-                            <option value="Post Graduation">Post Graduation</option>
-                            <option value="Others">Others</option>
+                            <SelectItem value="10th">10th Pass</SelectItem>
+                            <SelectItem value="12th">12th Pass</SelectItem>
+                            <SelectItem value="ITI">ITI</SelectItem>
+                            <SelectItem value="Diploma">Diploma</SelectItem>
+                            <SelectItem value="Graduation">Graduation</SelectItem>
+                            <SelectItem value="Post Graduation">Post Graduation</SelectItem>
+                            <SelectItem value="Others">Others</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -646,7 +646,7 @@ const EditJobModal = ({
                     />
                   </div>
                   <div>
-                    <Label>Annual CTC *</Label>
+                    <Label>Total Monthly CTC *</Label>
                     <Input
                       type="number"
                       value={editForm.salaryBreakdown?.ctc || ""}

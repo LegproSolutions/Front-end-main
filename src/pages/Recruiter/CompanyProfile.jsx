@@ -110,7 +110,7 @@ const CompanyProfile = () => {
         <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
           
           {/* Header */}
-          <div className="bg-blue-600 px-8 py-6 text-white flex items-center justify-between">
+          <div className="bg-blue-600 px-4 sm:px-8 py-6 text-white flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Building2 className="h-6 w-6 text-blue-200" />
@@ -122,7 +122,7 @@ const CompanyProfile = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-8">
             {/* Top Area: Logo & Core info */}
             <div className="flex flex-col md:flex-row gap-8 items-start pb-6 border-b border-gray-100">
               
@@ -220,7 +220,7 @@ const CompanyProfile = () => {
                     Website URL
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"

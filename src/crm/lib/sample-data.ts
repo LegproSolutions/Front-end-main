@@ -203,8 +203,7 @@ export const educationOptions = [
 ];
 
 export const sourceOptions = [
-  "JobMela", "WhatsApp", "Field Sourcing", "Bulk Upload", "Referral",
-  "Naukri", "LinkedIn", "Walk-in", "Campus", "Social Media"
+  "CRM", "JobMela Portal", "Bulk Upload", "Campus"
 ];
 
 export const genderOptions = ["Male", "Female", "Other"];

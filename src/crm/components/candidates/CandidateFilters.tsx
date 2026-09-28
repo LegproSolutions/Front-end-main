@@ -27,6 +27,48 @@ interface CandidateFiltersProps {
   onFilterChange: (filters: any) => void;
 }
 
+const educationTradesMapping: Record<string, string[]> = {
+  "ITI": [
+    'Electrician', 'Fitter', 'Turner', 'Machinist', 'Welder', 'Plumber',
+    'Carpenter', 'Wireman', 'Diesel Mechanic', 'Motor Mechanic',
+    'Sheet Metal Worker', 'Painter', 'Draughtsman Civil', 'Draughtsman Mechanical',
+    'COPA (Computer)', 'Electronics Mechanic', 'Instrument Mechanic',
+    'Refrigeration & AC', 'Tool & Die Maker', 'Moulder'
+  ],
+  "Diploma": [
+    'Mechanical Engineering', 'Civil Engineering', 'Electrical Engineering',
+    'Electronics & Communication', 'Computer Science', 'Information Technology',
+    'Chemical Engineering', 'Automobile Engineering', 'Instrument Mechanic',
+    'Refrigeration & AC'
+  ],
+  "B.Tech": [
+    'Mechanical Engineering', 'Civil Engineering', 'Electrical Engineering',
+    'Electronics & Communication', 'Computer Science', 'Information Technology',
+    'Chemical Engineering', 'Automobile Engineering'
+  ],
+  "Graduation": [
+    'B.A (General)', 'B.Sc (General)', 'B.Com (General)', 'BBA', 'BCA', 'MCA'
+  ],
+  "BCA": ['BCA', 'Computer Science', 'Information Technology'],
+  "BBA": ['BBA'],
+  "MBA": ['MBA'],
+  "B.Sc": ['B.Sc (General)', 'Computer Science', 'Information Technology'],
+  "B.Com": ['B.Com (General)'],
+  "B.A": ['B.A (General)'],
+  "Others": [
+    'Electrician', 'Fitter', 'Turner', 'Machinist', 'Welder', 'Plumber',
+    'Carpenter', 'Wireman', 'Diesel Mechanic', 'Motor Mechanic',
+    'Sheet Metal Worker', 'Painter', 'Draughtsman Civil', 'Draughtsman Mechanical',
+    'COPA (Computer)', 'Electronics Mechanic', 'Instrument Mechanic',
+    'Refrigeration & AC', 'Tool & Die Maker', 'Moulder',
+    'Mechanical Engineering', 'Civil Engineering', 'Electrical Engineering',
+    'Electronics & Communication', 'Computer Science', 'Information Technology',
+    'Chemical Engineering', 'Automobile Engineering',
+    'B.A (General)', 'B.Sc (General)', 'B.Com (General)', 'BBA', 'BCA',
+    'MBA', 'MCA'
+  ]
+};
+
 const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersProps) => {
   const [localFilters, setLocalFilters] = React.useState(activeFilters);
 
@@ -46,6 +88,18 @@ const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersPro
   const availableDistricts = React.useMemo(() => {
     return selectedStates.flatMap((state: string) => stateDistricts[state] || []);
   }, [selectedStates]);
+
+  const availableTrades = React.useMemo(() => {
+    if (selectedEducation.length === 0) return [];
+    
+    const tradesSet = new Set<string>();
+    selectedEducation.forEach((edu: string) => {
+      const tradesForEdu = educationTradesMapping[edu] || [];
+      tradesForEdu.forEach(t => tradesSet.add(t));
+    });
+    
+    return Array.from(tradesSet);
+  }, [selectedEducation]);
 
   const toggleState = (state: string) => {
     const newStates = selectedStates.includes(state)
@@ -75,7 +129,21 @@ const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersPro
     const newEducation = selectedEducation.includes(edu)
       ? selectedEducation.filter((e: string) => e !== edu)
       : [...selectedEducation, edu];
-    setLocalFilters({ ...localFilters, education: newEducation });
+      
+    // Filter out selected trades that are no longer available in the new education options
+    const newAvailableTrades = new Set<string>();
+    newEducation.forEach((e: string) => {
+      const tradesForEdu = educationTradesMapping[e] || [];
+      tradesForEdu.forEach(t => newAvailableTrades.add(t));
+    });
+    
+    const newTrades = selectedTrades.filter((t: string) => newAvailableTrades.has(t));
+    
+    setLocalFilters({ 
+      ...localFilters, 
+      education: newEducation,
+      trades: newTrades 
+    });
   };
 
   const toggleSource = (source: string) => {
@@ -109,7 +177,7 @@ const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersPro
   };
 
   const isAgeFiltered = localFilters.ageRange && (localFilters.ageRange[0] !== 18 || localFilters.ageRange[1] !== 60);
-  const hasActiveFilters = selectedStates.length > 0 || selectedDistricts.length > 0 || selectedTrades.length > 0 || selectedEducation.length > 0 || selectedSources.length > 0 || selectedGenders.length > 0 || selectedStatuses.length > 0 || localFilters.search || isAgeFiltered;
+  const hasActiveFilters = selectedStates.length > 0 || selectedDistricts.length > 0 || selectedTrades.length > 0 || selectedEducation.length > 0 || selectedSources.length > 0 || selectedGenders.length > 0 || localFilters.search || isAgeFiltered;
 
   return (
     <motion.div 
@@ -149,7 +217,67 @@ const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersPro
       </div>
 
       {/* Horizontal Filter Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 items-start">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 items-start">
+        {/* Source */}
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Source</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full h-9 justify-between text-xs font-medium px-3 rounded-xl border-none bg-muted/50 hover:bg-muted/80 shadow-inner">
+                <span className="truncate flex items-center gap-1.5">
+                  <Globe size={11} className="text-primary/60" />
+                  {selectedSources.length > 0 ? `${selectedSources.length}` : "All"}
+                </span>
+                <ChevronDown size={11} className="opacity-40" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[220px] p-1 rounded-xl shadow-2xl border-none" align="start">
+              <div className="space-y-0.5 max-h-[250px] overflow-y-auto p-1 custom-scrollbar">
+                {sourceOptions.map((source) => (
+                  <div
+                    key={source}
+                    className={cn("flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-lg cursor-pointer transition-colors", selectedSources.includes(source) && "bg-primary/5")}
+                    onClick={() => toggleSource(source)}
+                  >
+                    <Checkbox checked={selectedSources.includes(source)} className="rounded-sm border-primary/20" />
+                    <span className="text-xs font-medium">{source}</span>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* States */}
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">States</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full h-9 justify-between text-xs font-medium px-3 rounded-xl border-none bg-muted/50 hover:bg-muted/80 shadow-inner">
+                <span className="truncate flex items-center gap-1.5">
+                  <MapPin size={11} className="text-primary/60" />
+                  {selectedStates.length > 0 ? `${selectedStates.length}` : "Everywhere"}
+                </span>
+                <ChevronDown size={11} className="opacity-40" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[220px] p-1 rounded-xl shadow-2xl border-none" align="start">
+              <div className="space-y-0.5 max-h-[250px] overflow-y-auto p-1 custom-scrollbar">
+                {Object.keys(stateDistricts).map((state) => (
+                  <div
+                    key={state}
+                    className={cn("flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-lg cursor-pointer transition-colors", selectedStates.includes(state) && "bg-primary/5")}
+                    onClick={() => toggleState(state)}
+                  >
+                    <Checkbox checked={selectedStates.includes(state)} className="rounded-sm border-primary/20" />
+                    <span className="text-xs font-medium">{state}</span>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
         {/* Districts */}
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Districts</Label>
@@ -190,66 +318,6 @@ const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersPro
           </Popover>
         </div>
 
-        {/* States */}
-        <div className="space-y-1.5">
-          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">States</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full h-9 justify-between text-xs font-medium px-3 rounded-xl border-none bg-muted/50 hover:bg-muted/80 shadow-inner">
-                <span className="truncate flex items-center gap-1.5">
-                  <MapPin size={11} className="text-primary/60" />
-                  {selectedStates.length > 0 ? `${selectedStates.length}` : "Everywhere"}
-                </span>
-                <ChevronDown size={11} className="opacity-40" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[220px] p-1 rounded-xl shadow-2xl border-none" align="start">
-              <div className="space-y-0.5 max-h-[250px] overflow-y-auto p-1 custom-scrollbar">
-                {Object.keys(stateDistricts).map((state) => (
-                  <div
-                    key={state}
-                    className={cn("flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-lg cursor-pointer transition-colors", selectedStates.includes(state) && "bg-primary/5")}
-                    onClick={() => toggleState(state)}
-                  >
-                    <Checkbox checked={selectedStates.includes(state)} className="rounded-sm border-primary/20" />
-                    <span className="text-xs font-medium">{state}</span>
-                  </div>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Statuses */}
-        <div className="space-y-1.5">
-          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Status</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full h-9 justify-between text-xs font-medium px-3 rounded-xl border-none bg-muted/50 hover:bg-muted/80 shadow-inner">
-                <span className="truncate flex items-center gap-1.5">
-                  <Activity size={11} className="text-primary/60" />
-                  {selectedStatuses.length > 0 ? `${selectedStatuses.length}` : "All"}
-                </span>
-                <ChevronDown size={11} className="opacity-40" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-1 rounded-xl shadow-2xl border-none" align="start">
-              <div className="space-y-0.5 max-h-[250px] overflow-y-auto p-1 custom-scrollbar">
-                {clientPipelineStages.map((status) => (
-                  <div
-                    key={status}
-                    className={cn("flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-lg cursor-pointer transition-colors", selectedStatuses.includes(status) && "bg-primary/5")}
-                    onClick={() => toggleStatus(status)}
-                  >
-                    <Checkbox checked={selectedStatuses.includes(status)} className="rounded-sm border-primary/20" />
-                    <span className="text-xs font-medium capitalize">{status.replace('_', ' ')}</span>
-                  </div>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
         {/* Education */}
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Education</Label>
@@ -285,56 +353,40 @@ const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersPro
           <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Trades</Label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full h-9 justify-between text-xs font-medium px-3 rounded-xl border-none bg-muted/50 hover:bg-muted/80 shadow-inner">
+              <Button 
+                variant="outline" 
+                className="w-full h-9 justify-between text-xs font-medium px-3 rounded-xl border-none bg-muted/50 hover:bg-muted/80 shadow-inner"
+                disabled={selectedEducation.length === 0}
+              >
                 <span className="truncate flex items-center gap-1.5">
                   <Wrench size={11} className="text-primary/60" />
-                  {selectedTrades.length > 0 ? `${selectedTrades.length}` : "All"}
+                  {selectedEducation.length === 0 
+                    ? "Select Education" 
+                    : selectedTrades.length > 0 
+                      ? `${selectedTrades.length}` 
+                      : "All Trades"}
                 </span>
                 <ChevronDown size={11} className="opacity-40" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[260px] p-1 rounded-xl shadow-2xl border-none" align="start">
               <div className="space-y-0.5 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
-                {tradesList.map((trade) => (
-                  <div
-                    key={trade}
-                    className={cn("flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-lg cursor-pointer transition-colors", selectedTrades.includes(trade) && "bg-primary/5")}
-                    onClick={() => toggleTrade(trade)}
-                  >
-                    <Checkbox checked={selectedTrades.includes(trade)} className="rounded-sm border-primary/20" />
-                    <span className="text-xs font-medium">{trade}</span>
+                {availableTrades.length > 0 ? (
+                  availableTrades.map((trade) => (
+                    <div
+                      key={trade}
+                      className={cn("flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-lg cursor-pointer transition-colors", selectedTrades.includes(trade) && "bg-primary/5")}
+                      onClick={() => toggleTrade(trade)}
+                    >
+                      <Checkbox checked={selectedTrades.includes(trade)} className="rounded-sm border-primary/20" />
+                      <span className="text-xs font-medium">{trade}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-relaxed">
+                    No trades available for selected education
                   </div>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Source */}
-        <div className="space-y-1.5">
-          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Source</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full h-9 justify-between text-xs font-medium px-3 rounded-xl border-none bg-muted/50 hover:bg-muted/80 shadow-inner">
-                <span className="truncate flex items-center gap-1.5">
-                  <Globe size={11} className="text-primary/60" />
-                  {selectedSources.length > 0 ? `${selectedSources.length}` : "All"}
-                </span>
-                <ChevronDown size={11} className="opacity-40" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[220px] p-1 rounded-xl shadow-2xl border-none" align="start">
-              <div className="space-y-0.5 max-h-[250px] overflow-y-auto p-1 custom-scrollbar">
-                {sourceOptions.map((source) => (
-                  <div
-                    key={source}
-                    className={cn("flex items-center space-x-2 p-2 hover:bg-primary/5 rounded-lg cursor-pointer transition-colors", selectedSources.includes(source) && "bg-primary/5")}
-                    onClick={() => toggleSource(source)}
-                  >
-                    <Checkbox checked={selectedSources.includes(source)} className="rounded-sm border-primary/20" />
-                    <span className="text-xs font-medium">{source}</span>
-                  </div>
-                ))}
+                )}
               </div>
             </PopoverContent>
           </Popover>
@@ -409,11 +461,7 @@ const CandidateFilters = ({ activeFilters, onFilterChange }: CandidateFiltersPro
                 <MapPin size={10} /> {d} <X size={10} className="cursor-pointer hover:text-destructive" onClick={() => toggleDistrict(d)} />
               </Badge>
             ))}
-            {selectedStatuses.map((s: string) => (
-              <Badge key={s} className="text-[10px] h-6 px-2.5 gap-1.5 rounded-full bg-success/10 text-success border-none font-bold uppercase tracking-tighter">
-                <Activity size={10} /> {s.replace('_', ' ')} <X size={10} className="cursor-pointer hover:text-destructive" onClick={() => toggleStatus(s)} />
-              </Badge>
-            ))}
+
             {selectedEducation.map((e: string) => (
               <Badge key={e} variant="outline" className="text-[10px] h-6 px-2.5 gap-1.5 rounded-full border-muted-foreground/20 text-muted-foreground font-bold">
                 <GraduationCap size={10} /> {e} <X size={10} className="cursor-pointer hover:text-destructive" onClick={() => toggleEducation(e)} />

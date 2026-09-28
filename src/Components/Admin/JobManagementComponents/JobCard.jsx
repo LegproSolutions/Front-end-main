@@ -4,13 +4,16 @@ import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import { MapPin, IndianRupee, Clock, Users, Building2, Calendar, Eye, Edit, Trash2 } from "lucide-react";
 
-const JobCard = ({ job, onViewApplications, onViewEligible, showEligibleView, onEdit, onDelete, onVerify, getStatusBadge, formatSalary, formatDate, readOnly = false }) => {
+const JobCard = ({ job, onViewApplications, onViewEligible, showEligibleView, onEdit, onDelete, onVerify, onViewDetails, getStatusBadge, formatSalary, formatDate, readOnly = false }) => {
   return (
     <Card key={job._id} className="border border-gray-200 hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-900 mb-1">
+            <h3 
+              onClick={() => onViewDetails(job)} 
+              className="font-bold text-lg text-gray-900 mb-1 cursor-pointer hover:underline hover:text-primary transition-all"
+            >
               {job.title} <span className="text-sm font-normal text-gray-500">#{String(job.jobId || "0").padStart(4, "0")}</span>
             </h3>
             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -45,7 +48,8 @@ const JobCard = ({ job, onViewApplications, onViewEligible, showEligibleView, on
               <Button size="sm" variant="destructive" onClick={() => onVerify(job._id, "Rejected")}>Reject</Button>
             </>
           )}
-          <Button size="sm" variant="outline" onClick={() => onViewApplications(job)} className="flex items-center gap-1"><Eye className="h-4 w-4"/> Applications</Button>
+          <Button size="sm" variant="outline" onClick={() => onViewDetails(job)} className="flex items-center gap-1"><Eye className="h-4 w-4"/> View Details</Button>
+          <Button size="sm" variant="outline" onClick={() => onViewApplications(job)} className="flex items-center gap-1"><Eye className="h-4 w-4"/> Applications ({job.applicationCount || 0})</Button>
           {!readOnly && (
             <>
               <Button size="sm" variant="outline" onClick={() => onEdit(job)} className="flex items-center gap-1"><Edit className="h-4 w-4"/> Edit</Button>

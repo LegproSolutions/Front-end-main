@@ -163,7 +163,7 @@ export default function ClientDetail() {
     pipeline.forEach((p: any) => {
       const stageName = p.stage?.stage_name?.toLowerCase() || "";
       let mappedStage = stageName;
-      if (stageName === "applied" || stageName === "new" || stageName === "new_lead") {
+      if (stageName === "applied" || stageName === "new" || stageName === "new_lead" || stageName === "pending") {
         mappedStage = "new_lead";
       } else if (stageName === "shortlisted" || stageName === "screened") {
         mappedStage = "screened";

@@ -22,7 +22,7 @@ import { Pencil, Loader2, Save } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/crm/lib/api";
 import { Alert, AlertDescription, AlertTitle } from "@/crm/components/ui/alert";
-import { educationOptions, sourceOptions, stateDistricts, tradesList } from "@/crm/lib/sample-data";
+import { educationOptions, sourceOptions, stateDistricts, tradesList, statusLabels } from "@/crm/lib/sample-data";
 import { transformCandidateData } from "@/crm/lib/candidate-utils";
 import { Card } from "@/crm/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
@@ -298,13 +298,13 @@ export default function Candidates() {
             <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-primary/5">
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Candidate</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Contact Info</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Gender</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Education & Trades</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Location</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Channel</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 text-right">Actions</TableHead>
+                  <TableHead className="text-xs font-black uppercase tracking-wider text-muted-foreground/90 py-5">Candidate</TableHead>
+                  <TableHead className="text-xs font-black uppercase tracking-wider text-muted-foreground/90 py-5 w-[180px]">Contact Info</TableHead>
+                  <TableHead className="text-xs font-black uppercase tracking-wider text-muted-foreground/90 py-5 w-[110px]">Gender</TableHead>
+                  <TableHead className="text-xs font-black uppercase tracking-wider text-muted-foreground/90 py-5 w-[240px]">Education & Trades</TableHead>
+                  <TableHead className="text-xs font-black uppercase tracking-wider text-muted-foreground/90 py-5 w-[180px]">Location</TableHead>
+                  <TableHead className="text-xs font-black uppercase tracking-wider text-muted-foreground/90 py-5 w-[120px]">Channel</TableHead>
+                  <TableHead className="text-xs font-black uppercase tracking-wider text-muted-foreground/90 py-5 w-[80px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -344,7 +344,7 @@ export default function Candidates() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 w-[180px]">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-primary whitespace-nowrap">
                               <Phone size={12} className="shrink-0" />
@@ -358,27 +358,27 @@ export default function Candidates() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="py-4 text-xs font-semibold whitespace-nowrap">
+                        <TableCell className="py-4 w-[110px] text-xs font-semibold whitespace-nowrap">
                           {c.gender}
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 w-[240px]">
                           <div className="space-y-1">
                             <div className="text-xs font-bold text-foreground leading-tight">{c.education}</div>
                             <div className="text-[10px] text-muted-foreground leading-tight">{c.trades}</div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 w-[180px]">
                           <div className="flex items-center gap-1.5 text-xs font-medium text-foreground whitespace-nowrap">
                             <MapPin size={12} className="text-primary shrink-0" />
                             {c.location}
                           </div>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 w-[120px]">
                           <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest border-none bg-accent text-accent-foreground px-2 py-1 rounded-lg whitespace-nowrap">
                             {c.source}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-4 text-right">
+                        <TableCell className="py-4 w-[80px] text-right">
                           <Button
                             variant="ghost"
                             size="sm"

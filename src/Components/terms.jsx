@@ -158,8 +158,8 @@ const TermsAndConditions = () => {
                   </h2>
                   <p className="text-gray-700 leading-relaxed text-sm">
                     If you have any questions about these Terms and Conditions, please contact us at{" "}
-                    <a href="mailto:support@jobmela.com" className="text-amber-800 font-medium hover:underline">
-                      support@jobmela.com
+                    <a href="mailto:connect@jobmela.co.in" className="text-amber-800 font-medium hover:underline">
+                      connect@jobmela.co.in
                     </a>
                   </p>
                 </div>

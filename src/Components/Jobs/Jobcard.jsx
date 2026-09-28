@@ -161,7 +161,7 @@ const JobCard = ({ job, viewMode = "list" }) => {
   const isFeatured = job.havePremiumAccess === true;
 
   return (
-    <Card 
+    <Card
       onClick={handleViewDetails}
       className="hover:shadow-lg hover:border-blue-200 transition-all duration-300 cursor-pointer group border border-slate-100 overflow-hidden bg-white rounded-2xl relative"
     >
@@ -172,11 +172,11 @@ const JobCard = ({ job, viewMode = "list" }) => {
 
       <CardContent className="p-5">
         <div className="flex flex-col gap-4">
-          
+
           {/* Top Row: Badges, Logo, Title, HR Contact */}
           <div className="flex flex-col md:flex-row items-start gap-4 justify-between">
             <div className="flex items-start gap-4 w-full md:w-auto">
-              
+
               {/* Company Logo Display with fallback */}
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex-shrink-0 w-16 h-16 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
                 {getCompanyLogo() ? (
@@ -200,7 +200,7 @@ const JobCard = ({ job, viewMode = "list" }) => {
                 <h3 className="font-extrabold text-lg text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-1">
                   {job.title}
                 </h3>
-                
+
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-sm">
                   <span className="font-bold text-slate-600 flex items-center gap-1">
                     <Building size={14} className="text-slate-400" />
@@ -248,7 +248,7 @@ const JobCard = ({ job, viewMode = "list" }) => {
 
           {/* Middle Row: Grid details for Experience, Education, Salary, Location & Shift */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-3 border-y border-slate-100 bg-slate-50/30 rounded-xl px-4">
-            
+
             {/* Salary */}
             <div className="flex items-start gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mt-0.5 flex-shrink-0">
@@ -256,7 +256,7 @@ const JobCard = ({ job, viewMode = "list" }) => {
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Salary</p>
-                <p className="text-sm font-extrabold text-slate-700">₹ {formatSalary(job.salary)} - Lakhs</p>
+                <p className="text-sm font-extrabold text-slate-700">₹ {formatSalary(job.salary)}</p>
                 {job.salaryBreakdown?.inHand && (
                   <p className="text-[11px] text-slate-500 font-semibold">In-Hand: ₹{Number(job.salaryBreakdown.inHand).toLocaleString()}/mo</p>
                 )}
@@ -296,7 +296,7 @@ const JobCard = ({ job, viewMode = "list" }) => {
 
           {/* Bottom Row: Benefits chips & Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            
+
             {/* Benefit chips */}
             <div className="flex flex-wrap gap-1.5 items-center w-full sm:w-auto">
               {hasTransport && (
@@ -330,11 +330,11 @@ const JobCard = ({ job, viewMode = "list" }) => {
             </div>
 
             {/* Quick Apply Experience Actions */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end">
               {/* Share Job */}
               <button
                 onClick={handleShareClick}
-                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl border border-slate-200 transition-all"
+                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl border border-slate-200 transition-all flex-shrink-0"
                 title="Share Job"
               >
                 <Share2 size={15} />
@@ -343,11 +343,10 @@ const JobCard = ({ job, viewMode = "list" }) => {
               {/* Save Job */}
               <button
                 onClick={handleSaveClick}
-                className={`p-2 rounded-xl border transition-all ${
-                  isSaved 
-                    ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100" 
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                }`}
+                className={`p-2 rounded-xl border transition-all flex-shrink-0 ${isSaved
+                  ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                  }`}
                 title={isSaved ? "Unsave Job" : "Save Job"}
               >
                 <Bookmark size={15} className={isSaved ? "fill-amber-600" : ""} />
@@ -360,7 +359,7 @@ const JobCard = ({ job, viewMode = "list" }) => {
                   handleViewDetails();
                 }}
                 variant="outline"
-                className="px-4 py-2 text-xs font-extrabold border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-xl h-9"
+                className="flex-1 sm:flex-none px-2 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-xl h-9"
               >
                 View Details
               </Button>
@@ -369,11 +368,10 @@ const JobCard = ({ job, viewMode = "list" }) => {
               <Button
                 onClick={handleApplyClick}
                 disabled={hasApplied}
-                className={`px-5 py-2 text-xs font-extrabold rounded-xl transition-all h-9 ${
-                  hasApplied 
-                    ? 'bg-emerald-600 text-white hover:bg-emerald-600 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                }`}
+                className={`flex-1 sm:flex-none px-2 sm:px-5 py-2 text-[11px] sm:text-xs font-extrabold rounded-xl transition-all h-9 ${hasApplied
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-600 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                  }`}
               >
                 {hasApplied ? "Applied ✓" : "Apply Now"}
               </Button>

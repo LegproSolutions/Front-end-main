@@ -3,6 +3,11 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
 import { AppContext } from "../../context/AppContext";
 import axios from "../../utils/axiosConfig";
+import { Bell } from "lucide-react";
+
+const backendUrl = import.meta.env?.VITE_API_URL;
+
+import toast from "react-hot-toast";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -10,7 +15,9 @@ const Dashboard = () => {
   const { companyData, logout, isRecruiterLoggingOut } = useContext(AppContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  // Credit system removed
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -18,24 +25,98 @@ const Dashboard = () => {
       if (isDropdownOpen && !event.target.closest(".profile-dropdown")) {
         setIsDropdownOpen(false);
       }
+      if (isNotificationsOpen && !event.target.closest(".notifications-dropdown")) {
+        setIsNotificationsOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isNotificationsOpen]);
+
+  // Track last time employer dismissed/viewed notifications (timestamp-based)
+  const [lastSeenAt, setLastSeenAt] = useState(() => {
+    try {
+      const saved = localStorage.getItem("company_notif_last_seen");
+      return saved ? parseInt(saved, 10) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const handleMarkAllRead = () => {
+    const now = Date.now();
+    setLastSeenAt(now);
+    localStorage.setItem("company_notif_last_seen", String(now));
+    setIsNotificationsOpen(false);
+    navigate("/dashboard/view-applications");
+  };
+
+  const handleSingleNotificationClick = () => {
+    const now = Date.now();
+    setLastSeenAt(now);
+    localStorage.setItem("company_notif_last_seen", String(now));
+    setIsNotificationsOpen(false);
+    navigate("/dashboard/view-applications");
+  };
+
+  // Fetch company applications notifications with polling
+  useEffect(() => {
+    if (!companyData) return;
+
+    const fetchNotifications = async () => {
+      try {
+        // company_token is an httpOnly cookie — sent automatically with withCredentials
+        const { data } = await axios.get(`${backendUrl}/api/company/all-applications`, {
+          withCredentials: true
+        });
+        if (data.success) {
+          const list = data.applications.map(app => ({
+            id: app.id,
+            title: "New Application",
+            message: `${app.user?.name || 'A candidate'} applied for your job post "${app.job?.title || 'Job Listing'}".`,
+            link: "/dashboard/view-applications",
+            receivedAt: app.createdAt ? new Date(app.createdAt).getTime() : 0,
+            time: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Recently"
+          }));
+          setNotifications(list);
+        }
+      } catch (error) {
+        console.error("Error fetching company notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, [companyData]);
+
+  // Only show applications received AFTER last time employer cleared notifications
+  const activeNotifications = notifications.filter(n => n.receivedAt > lastSeenAt);
 
   useEffect(() => {
-    if (companyData && window.location.pathname === "/dashboard") {
-      navigate("/dashboard/profile");
-    }
-
     const handleResize = () => {
       setIsSidebarOpen(window.innerWidth > 768);
     };
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
-  }, [companyData, navigate]);
+  }, []);
+
+  useEffect(() => {
+    if (companyData) {
+      const isProfileComplete = companyData.description && companyData.city && companyData.state;
+      if (!isProfileComplete) {
+        if (window.location.pathname !== "/dashboard/profile") {
+          toast.error("Please complete your company profile details first!");
+          navigate("/dashboard/profile");
+        }
+      } else if (window.location.pathname === "/dashboard") {
+        navigate("/dashboard/manage-jobs");
+      }
+    }
+  }, [companyData, navigate, window.location.pathname]);
 
   // Close sidebar when navigation happens on mobile
   const handleNavigation = () => {
@@ -82,7 +163,9 @@ const Dashboard = () => {
 
         {/* Company Profile Section */}
         {companyData && (
-          <div className="relative flex items-center gap-3 profile-dropdown">
+          <div className="relative flex items-center gap-3">
+
+            <div className="relative flex items-center gap-3 profile-dropdown">
             {/* Credit system removed */}
             {/* Company Name */}
             <span className="font-medium text-gray-800 max-md:hidden">
@@ -115,6 +198,17 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <ul className="list-none text-sm">
+                  <li>
+                    <button
+                      onClick={() => {
+                        navigate("/dashboard/profile");
+                        setIsDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-black font-semibold hover:bg-gray-100 transition-colors opacity-80 flex items-center gap-2"
+                    >
+                      Company Profile
+                    </button>
+                  </li>
                   <li>
                     <button
                       onClick={logout}
@@ -153,6 +247,7 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+          </div>
         )}
       </nav>
 
@@ -175,13 +270,6 @@ const Dashboard = () => {
           }`}
         >
           <ul className="flex flex-col pt-2 text-gray-800">
-            <SidebarItem
-              to="/dashboard/profile"
-              icon={assets.profile_upload_icon}
-              label="Company Profile"
-              isSidebarOpen={true}
-              onClick={handleNavigation}
-            />
 
             <SidebarItem
               to="/dashboard/add-job"

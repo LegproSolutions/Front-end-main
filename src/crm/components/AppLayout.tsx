@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/crm/components/ui/sidebar";
 import { AppSidebar } from "@/crm/components/AppSidebar";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/crm/components/ui/input";
 
 interface AppLayoutProps {
@@ -17,13 +17,13 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="border-b bg-card shrink-0">
-            <div className="h-14 flex items-center justify-between px-4">
+            <div className="min-h-20 py-3 flex items-center justify-between px-4">
               <div className="flex items-center gap-3">
                 <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
                 {title && (
                   <div className="flex flex-col">
-                    <h1 className="text-sm font-semibold text-foreground leading-tight">{title}</h1>
-                    {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+                    <h1 className="text-xl md:text-2xl font-black text-foreground tracking-tight leading-tight">{title}</h1>
+                    {subtitle && <p className="text-xs md:text-sm font-bold text-muted-foreground/80 mt-0.5">{subtitle}</p>}
                   </div>
                 )}
               </div>
@@ -35,10 +35,6 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                     className="h-8 w-64 pl-8 text-xs bg-secondary border-0 focus-visible:ring-1"
                   />
                 </div>
-                <button className="relative p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
-                  <Bell className="h-4 w-4" />
-                  <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-primary" />
-                </button>
               </div>
             </div>
             {actions && (

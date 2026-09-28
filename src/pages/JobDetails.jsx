@@ -945,7 +945,7 @@ const JobDetails = () => {
                     </div>
 
                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col justify-between">
-                      <span className="text-xs text-blue-700 font-bold uppercase tracking-wider">Annual CTC</span>
+                      <span className="text-xs text-blue-700 font-bold uppercase tracking-wider">Total Monthly CTC</span>
                       <div>
                         <p className="text-2xl font-black text-[#0F3B7A] mt-1">
                           {formatSalary(job.salaryBreakdown.ctc || job.salary)}
@@ -1405,13 +1405,13 @@ const JobDetails = () => {
       </div>
 
       {/* Sticky Bottom Actions Bar (Mobile Only) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 p-4 flex gap-2.5 items-center justify-around z-50 shadow-lg">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 p-3 flex gap-2 items-center justify-between z-50 shadow-lg">
         {job.hrContact?.mobile && (
           <a
             href={`tel:${job.hrContact.mobile}`}
-            className="flex-1 max-w-[120px] bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 py-3 rounded-xl text-xs font-black flex items-center justify-center gap-1 transition-all"
+            className="flex-1 min-w-[70px] max-w-[90px] bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 py-2.5 rounded-xl text-[11px] font-black flex items-center justify-center gap-1 transition-all"
           >
-            <Phone className="w-4 h-4 text-[#0F3B7A]" /> Call
+            <Phone className="w-3.5 h-3.5 text-[#0F3B7A]" /> Call
           </a>
         )}
         
@@ -1420,25 +1420,25 @@ const JobDetails = () => {
             href={`https://wa.me/${job.hrContact.whatsapp.replace(/\+/g, '').replace(/\s/g, '')}`}
             target="_blank"
             rel="noreferrer"
-            className="flex-1 max-w-[120px] bg-green-50 text-green-700 border border-green-200 py-3 rounded-xl text-xs font-black flex items-center justify-center gap-1 transition-all"
+            className="flex-1 min-w-[70px] max-w-[95px] bg-green-50 text-green-700 border border-green-200 py-2.5 rounded-xl text-[11px] font-black flex items-center justify-center gap-1 transition-all"
           >
-            <MessageSquare className="w-4 h-4 text-green-600" /> WhatsApp
+            <MessageSquare className="w-3.5 h-3.5 text-green-600" /> WhatsApp
           </a>
         )}
 
         {isUserAuthenticated && !hasApplied && !isProfileComplete() ? (
-          <div className="flex flex-col gap-1 flex-2 w-full max-w-[220px]">
+          <div className="flex-2 flex flex-col gap-0.5 min-w-[120px]">
             <button
               onClick={() => {
                 sessionStorage.setItem("returnAfterProfile", window.location.pathname);
                 sessionStorage.setItem("pendingJobId", id);
                 navigate("/profile");
               }}
-              className="w-full bg-amber-600 text-white py-3 rounded-xl text-xs font-black flex items-center justify-center gap-1 shadow"
+              className="w-full bg-amber-600 text-white py-2.5 rounded-xl text-[11px] font-black flex items-center justify-center gap-1 shadow"
             >
               Complete Profile
             </button>
-            <p className="text-[9px] text-center text-amber-700 font-bold leading-tight">
+            <p className="text-[8px] text-center text-amber-700 font-bold leading-tight">
               Min 71% required
             </p>
           </div>
@@ -1446,7 +1446,7 @@ const JobDetails = () => {
           <button
             onClick={hasApplied ? undefined : handleApplyClick}
             disabled={hasApplied || (checklistScore < 50 && isUserAuthenticated)}
-            className={`flex-2 w-full max-w-[200px] text-white py-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow transition-all ${
+            className={`flex-2 min-w-[120px] text-white py-2.5 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 shadow transition-all ${
               hasApplied
                 ? "bg-slate-300 text-slate-500 cursor-not-allowed"
                 : checklistScore < 50 && isUserAuthenticated
@@ -1584,14 +1584,14 @@ const JobDetails = () => {
 
 // Sub-components: Highlight Card
 const HighlightCard = ({ icon, label, value, subtitle }) => (
-  <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm flex flex-col justify-between items-center text-center">
-    <div className="p-2 rounded-lg bg-slate-50 mb-2">
+  <div className="bg-white p-2.5 sm:p-4 rounded-xl border border-slate-150 shadow-sm flex flex-col justify-between items-center text-center min-w-0">
+    <div className="p-1.5 sm:p-2 rounded-lg bg-slate-50 mb-1.5 flex-shrink-0">
       {icon}
     </div>
-    <div className="space-y-0.5">
-      <p className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">{label}</p>
-      <p className="text-xs font-black text-slate-800">{value}</p>
-      {subtitle && <p className="text-[9px] text-slate-400 font-semibold">{subtitle}</p>}
+    <div className="space-y-0.5 w-full min-w-0">
+      <p className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold tracking-wider truncate" title={label}>{label}</p>
+      <p className="text-[11px] sm:text-xs font-black text-slate-800 break-words">{value}</p>
+      {subtitle && <p className="text-[8px] sm:text-[9px] text-slate-450 font-semibold truncate" title={subtitle}>{subtitle}</p>}
     </div>
   </div>
 );

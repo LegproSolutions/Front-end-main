@@ -41,8 +41,57 @@ const Navbar = () => {
     showUserLogin,
     setShowUserLogin,
     setUserLoginState,
+    homeJobs,
   } = useContext(AppContext);
   const location = useLocation();
+
+  // Generate notifications based on homeJobs
+  const notifications = [];
+  if (homeJobs && homeJobs.length > 0) {
+    // 1. Urgent hiring jobs
+    const urgentJobs = homeJobs.filter(job => job.immediateJoining === true || job.immediateJoining === "true" || job.immediateJoining === "Yes");
+    urgentJobs.slice(0, 3).forEach(job => {
+      const formattedJobId = job.jobId ? String(job.jobId).padStart(4, "0") : "";
+      notifications.push({
+        id: `urgent-${job.id || job._id}`,
+        title: "Urgent Hiring!",
+        message: `${job.title} at ${job.companyDetails?.name || 'a leading company'} is looking for immediate joiners.`,
+        type: "urgent",
+        link: `/job-details/${formattedJobId || job.id || job._id}`,
+        time: job.date ? new Date(job.date).toLocaleDateString() : "Recently"
+      });
+    });
+
+    // 2. New updated jobs (most recent 3 jobs)
+    const sortedJobs = [...homeJobs].sort((a, b) => new Date(b.date) - new Date(a.date));
+    sortedJobs.slice(0, 3).forEach(job => {
+      const formattedJobId = job.jobId ? String(job.jobId).padStart(4, "0") : "";
+      notifications.push({
+        id: `new-${job.id || job._id}`,
+        title: "New Job Posted",
+        message: `A new role for "${job.title}" has been posted in ${job.location}.`,
+        type: "new",
+        link: `/job-details/${formattedJobId || job.id || job._id}`,
+        time: job.date ? new Date(job.date).toLocaleDateString() : "Recently"
+      });
+    });
+  }
+
+  const [readNotifications, setReadNotifications] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("read_notifs") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const handleNotificationClick = (id) => {
+    const updated = [...readNotifications, id];
+    setReadNotifications(updated);
+    localStorage.setItem("read_notifs", JSON.stringify(updated));
+  };
+
+  const activeNotifications = notifications.filter(n => !readNotifications.includes(n.id));
 
   const navigationItems = [
     { name: "Home", href: "/", icon: Home },
@@ -94,15 +143,62 @@ const Navbar = () => {
           {/* Right side - Auth & User Menu */}
           <div className="flex items-center space-x-3">
             {isUserAuthenticated && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
-                title="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
+                    title="Notifications"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {activeNotifications.length > 0 && (
+                      <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-80 max-h-[400px] overflow-y-auto" align="end">
+                  <DropdownMenuLabel className="font-bold text-[#0F3B7A] flex items-center justify-between">
+                    <span>Notifications</span>
+                    {activeNotifications.length > 0 && (
+                      <span className="bg-[#E8F0FF] text-[#0F3B7A] text-xs px-2 py-0.5 rounded-full font-medium">
+                        {activeNotifications.length} New
+                      </span>
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {activeNotifications.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-gray-500">
+                      No new notifications
+                    </div>
+                  ) : (
+                    activeNotifications.map((notif) => (
+                      <DropdownMenuItem
+                        key={notif.id}
+                        className="p-3 focus:bg-gray-50 cursor-pointer"
+                        onClick={() => handleNotificationClick(notif.id)}
+                        asChild
+                      >
+                        <Link to={notif.link} className="flex flex-col space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              notif.type === 'urgent' 
+                                ? 'bg-red-100 text-red-700' 
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {notif.title}
+                            </span>
+                            <span className="text-[10px] text-gray-400">{notif.time}</span>
+                          </div>
+                          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                            {notif.message}
+                          </p>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             {isUserAuthenticated ? (
               <>

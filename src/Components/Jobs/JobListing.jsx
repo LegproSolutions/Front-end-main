@@ -62,7 +62,7 @@ const JobListing = () => {
       setSelectedCategories([categoryParam]);
     }
   }, [searchParams]);
-  
+
   // Default view mode to list as requested
   const [viewMode] = useState("list");
 
@@ -199,7 +199,7 @@ const JobListing = () => {
   };
 
   // Check if any filters are active
-  const hasActiveFilters = 
+  const hasActiveFilters =
     searchFilter.title ||
     searchFilter.location ||
     searchFilter.education ||
@@ -214,7 +214,7 @@ const JobListing = () => {
   return (
     <div id="job-listing" className="bg-transparent py-10">
       <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-        
+
         {/* Horizontal Modern Top Filter Bar */}
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 mb-8 backdrop-blur-md">
           <div className="flex items-center justify-between mb-6">
@@ -233,7 +233,7 @@ const JobListing = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            
+
             {/* Search Input */}
             <div className="relative">
               <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Search Keywords</label>
@@ -375,7 +375,7 @@ const JobListing = () => {
           {/* Advanced Collapsible Section for Uniforms, Accommodation, and Categories */}
           {showAdvanced && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 p-6 rounded-2xl bg-slate-50/70 border border-slate-100 animate-fadeIn">
-              
+
               {/* Category Checkboxes */}
               {JobCategories.length > 0 && (
                 <div>
@@ -470,7 +470,7 @@ const JobListing = () => {
         {hasActiveFilters && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-6 flex flex-wrap gap-2 items-center">
             <span className="text-xs font-extrabold text-slate-500 mr-2">Selected Filters:</span>
-            
+
             {searchFilter.title && (
               <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">
                 "{searchFilter.title}"
@@ -600,11 +600,10 @@ const JobListing = () => {
                 <button
                   onClick={() => changePage(jobsPagination.currentPage - 1)}
                   disabled={!jobsPagination.hasPrev}
-                  className={`p-2 rounded-xl transition-all ${
-                    !jobsPagination.hasPrev
-                      ? "text-slate-300 cursor-not-allowed"
-                      : "text-slate-700 hover:bg-white hover:text-legpro-primary shadow-sm"
-                  }`}
+                  className={`p-2 rounded-xl transition-all ${!jobsPagination.hasPrev
+                    ? "text-slate-300 cursor-not-allowed"
+                    : "text-slate-700 hover:bg-white hover:text-legpro-primary shadow-sm"
+                    }`}
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -631,11 +630,10 @@ const JobListing = () => {
                         <button
                           key={pageNum}
                           onClick={() => changePage(pageNum)}
-                          className={`min-w-[2.5rem] h-10 flex items-center justify-center mx-1 rounded-xl font-bold transition-all ${
-                            jobsPagination.currentPage === pageNum
-                              ? "bg-legpro-primary text-white shadow-md scale-105"
-                              : "text-slate-700 hover:bg-white hover:shadow-sm"
-                          }`}
+                          className={`min-w-[2.5rem] h-10 flex items-center justify-center mx-1 rounded-xl font-bold transition-all ${jobsPagination.currentPage === pageNum
+                            ? "bg-legpro-primary text-white shadow-md scale-105"
+                            : "text-slate-700 hover:bg-white hover:shadow-sm"
+                            }`}
                         >
                           {pageNum}
                         </button>
@@ -645,7 +643,7 @@ const JobListing = () => {
 
                   {jobsPagination.totalPages > 5 &&
                     jobsPagination.currentPage <
-                      jobsPagination.totalPages - 2 && (
+                    jobsPagination.totalPages - 2 && (
                       <>
                         <span className="min-w-[2.5rem] h-10 flex items-center justify-center mx-1 text-slate-400">
                           ...
@@ -665,11 +663,10 @@ const JobListing = () => {
                 <button
                   onClick={() => changePage(jobsPagination.currentPage + 1)}
                   disabled={!jobsPagination.hasNext}
-                  className={`p-2 rounded-xl transition-all ${
-                    !jobsPagination.hasNext
-                      ? "text-slate-300 cursor-not-allowed"
-                      : "text-slate-700 hover:bg-white hover:text-legpro-primary shadow-sm"
-                  }`}
+                  className={`p-2 rounded-xl transition-all ${!jobsPagination.hasNext
+                    ? "text-slate-300 cursor-not-allowed"
+                    : "text-slate-700 hover:bg-white hover:text-legpro-primary shadow-sm"
+                    }`}
                 >
                   <ChevronRight size={20} />
                 </button>

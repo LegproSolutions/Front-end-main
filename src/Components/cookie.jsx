@@ -70,7 +70,7 @@ const CookiePolicy = () => {
                     <HelpCircle className="w-4 h-4 mr-2 text-[#0F3B7A]" />
                     <span className="font-medium">Questions?</span>
                   </div>
-                  <p className="text-gray-600">Contact privacy@jobmela.com</p>
+                  <p className="text-gray-600">Contact connect@jobmela.co.in</p>
                 </div>
                 
                 <div className="bg-blue-50 p-4 rounded-lg">
@@ -250,32 +250,12 @@ const CookiePolicy = () => {
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <p className="text-gray-700 leading-relaxed mb-6">
-                  If you have any questions about our cookie practices, please contact us at:
+                <p className="text-gray-700 leading-relaxed">
+                  If you have any questions about our cookie practices, please contact us at:{" "}
+                  <a href="mailto:connect@jobmela.co.in" className="text-[#0F3B7A] font-medium hover:underline">
+                    connect@jobmela.co.in
+                  </a>
                 </p>
-                
-                <div className="bg-[#0F3B7A]/5 rounded-lg p-6 border border-[#0F3B7A]/10 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div>
-                    <h3 className="font-semibold text-[#0F3B7A] mb-1">Email Us</h3>
-                    <p className="text-gray-700">
-                      <a href="mailto:privacy@jobmela.com" className="text-[#0F3B7A] hover:underline">privacy@jobmela.com</a>
-                    </p>
-                  </div>
-                  
-                  <Separator orientation="vertical" className="h-12 hidden md:block" />
-                  
-                  <div>
-                    <h3 className="font-semibold text-[#0F3B7A] mb-1">Call Us</h3>
-                    <p className="text-gray-700">+1 (555) 123-4567</p>
-                  </div>
-                  
-                  <Separator orientation="vertical" className="h-12 hidden md:block" />
-                  
-                  <div>
-                    <h3 className="font-semibold text-[#0F3B7A] mb-1">Mail Us</h3>
-                    <p className="text-gray-700">123 Job Mela Lane, City, Country</p>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>

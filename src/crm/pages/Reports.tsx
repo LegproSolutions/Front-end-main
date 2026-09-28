@@ -107,10 +107,15 @@ export default function Reports() {
 
   // Process data from backend
   const stats = reportsData?.statistics || {};
-  const totalApps = stats.totalApplications ?? 120;
-  const totalHired = stats.joined ?? 35;
-  const conversionRate = stats.joiningRatio !== undefined ? `${stats.joiningRatio}%` : "17.5%";
-  const dropoutRate = stats.dropoutRatio !== undefined ? `${stats.dropoutRatio}%` : "11.2%";
+  const totalApps = reportsData ? (stats.totalApplications ?? 0) : 120;
+  const totalHired = reportsData ? (stats.joined ?? 0) : 35;
+  const conversionRate = reportsData ? `${stats.joiningRatio ?? 0}%` : "17.5%";
+  const dropoutRate = reportsData ? `${stats.dropoutRatio ?? 0}%` : "11.2%";
+
+  // Conversion data for funnel
+  const conversionData = reportsData?.monthlyFunnel?.length > 0
+    ? reportsData.monthlyFunnel
+    : defaultConversionData;
 
   // Leaders
   const recruiterData = reportsData?.recruiterPerformance?.length > 0
@@ -188,7 +193,7 @@ export default function Reports() {
             <Card className="p-4">
               <h3 className="text-sm font-semibold text-card-foreground mb-4">Hiring Funnel (All Time)</h3>
               <ResponsiveContainer width="100%" height={260}>
-                <AreaChart data={defaultConversionData}>
+                <AreaChart data={conversionData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(215, 20%, 95%)" />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }} />
                   <YAxis tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }} />

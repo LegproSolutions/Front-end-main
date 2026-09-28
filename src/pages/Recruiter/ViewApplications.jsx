@@ -15,6 +15,7 @@ import {
   Lock,
   FileText,
   Phone,
+  Mail,
   Eye,
   Users,
   CheckCircle2,
@@ -307,7 +308,45 @@ const ViewApplications = () => {
       const isAgeEligible = candidateAge !== null ? (candidateAge >= ageLimits.min && candidateAge <= ageLimits.max) : true;
       
       const isProfileMatched = hasQual && hasStreamMatch && isAgeEligible;
-      
+
+      // ── ATS SCORE CALCULATION (weighted, 0-100) ────────────────────────────
+      // Weight breakdown:
+      //   Qualification match  : 35 pts
+      //   Stream / field match : 25 pts
+      //   Age eligibility      : 20 pts
+      //   Work experience      : 15 pts
+      //   Profile completeness :  5 pts
+
+      let atsScore = 0;
+
+      // 1. Qualification (35 pts)
+      if (hasQual) atsScore += 35;
+
+      // 2. Stream match (25 pts)
+      if (hasStreamMatch) atsScore += 25;
+
+      // 3. Age (20 pts)
+      if (isAgeEligible) atsScore += 20;
+
+      // 4. Work experience (15 pts) ─ check if candidate has any work experience filled
+      const workExp = data.applicationData?.workExperience;
+      const hasWorkExp =
+        workExp &&
+        Array.isArray(workExp)
+          ? workExp.length > 0
+          : workExp && typeof workExp === "object" && Object.keys(workExp).length > 0;
+      if (hasWorkExp) atsScore += 15;
+
+      // 5. Profile completeness (5 pts) ─ name, phone, DOB, photo all present
+      const appD = data.applicationData || {};
+      const profileFields = [appD.name || data.userId?.name, appD.phone || data.userId?.phone, appD.dateOfBirth, data.userId?.image];
+      const filledFields = profileFields.filter(Boolean).length;
+      atsScore += Math.round((filledFields / profileFields.length) * 5);
+
+      // Clamp to 100
+      atsScore = Math.min(100, Math.max(0, atsScore));
+      // ──────────────────────────────────────────────────────────────────────
+
       let candidateStatus = "pending";
       if (data.status === "Joined") {
         candidateStatus = "joined";
@@ -322,7 +361,8 @@ const ViewApplications = () => {
         isProfileMatched,
         candidateStatus,
         candidateAge,
-        ageLimits
+        ageLimits,
+        atsScore
       };
     });
   }, [jobApplicants, selectedJob]);
@@ -806,19 +846,8 @@ const ViewApplications = () => {
                   <div>
                     <div className="flex items-center flex-wrap gap-2">
                       <h3 className="text-lg font-semibold text-gray-800">{applicantName}</h3>
-                      {data.matchScore !== undefined && (
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
-                          data.matchScore >= 80 
-                            ? "bg-green-50 text-green-700 border-green-200" 
-                            : data.matchScore >= 50 
-                            ? "bg-blue-50 text-blue-700 border-blue-200" 
-                            : "bg-slate-50 text-slate-600 border-slate-200"
-                        }`}>
-                          Compatibility: {data.matchScore}%
-                        </span>
-                      )}
                       {data.isProfileMatched && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border border-indigo-200 shadow-sm animate-fade-in">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border border-indigo-200 shadow-sm">
                           <Sparkles className="h-3 w-3 text-indigo-500 animate-pulse" /> Matched
                         </span>
                       )}
@@ -836,11 +865,55 @@ const ViewApplications = () => {
                         <Phone className="h-3.5 w-3.5 text-gray-400" />
                         Mobile: <strong className="text-gray-700">{data.applicationData?.phone || data.userId?.phone || "N/A"}</strong>
                       </span>
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3.5 w-3.5 text-gray-400" />
+                        Email: <strong className="text-gray-700">{data.applicationData?.email || data.userId?.email || "N/A"}</strong>
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0 border-t md:border-t-0 pt-3 md:pt-0">
+
+                  {/* ATS Score Ring */}
+                  {(() => {
+                    const score = data.atsScore ?? 0;
+                    const radius = 20;
+                    const circ = 2 * Math.PI * radius;
+                    const dash = (score / 100) * circ;
+                    const gap = circ - dash;
+                    const ringColor =
+                      score >= 80 ? "#16a34a" : score >= 60 ? "#2563eb" : score >= 40 ? "#d97706" : "#dc2626";
+                    const labelColor =
+                      score >= 80 ? "text-green-700" : score >= 60 ? "text-blue-700" : score >= 40 ? "text-amber-600" : "text-red-600";
+                    const label =
+                      score >= 80 ? "Excellent" : score >= 60 ? "Good" : score >= 40 ? "Fair" : "Low";
+                    return (
+                      <div className="flex flex-col items-center gap-0.5" title={`ATS Score: ${score}%`}>
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                          {/* background track */}
+                          <circle cx="26" cy="26" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="5" />
+                          {/* progress arc */}
+                          <circle
+                            cx="26" cy="26" r={radius}
+                            fill="none"
+                            stroke={ringColor}
+                            strokeWidth="5"
+                            strokeLinecap="round"
+                            strokeDasharray={`${dash} ${gap}`}
+                            strokeDashoffset={circ / 4}
+                            style={{ transition: "stroke-dasharray 0.6s ease" }}
+                          />
+                          <text x="26" y="30" textAnchor="middle" fontSize="11" fontWeight="700" fill={ringColor}>
+                            {score}%
+                          </text>
+                        </svg>
+                        <span className={`text-[10px] font-semibold ${labelColor}`}>{label}</span>
+                        <span className="text-[9px] text-gray-400 font-medium tracking-wide">ATS Score</span>
+                      </div>
+                    );
+                  })()}
+
                   <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
                     data.status === "Joined"
                       ? "bg-green-100 text-green-800 border border-green-200"
